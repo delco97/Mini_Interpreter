@@ -21,7 +21,7 @@ L’operazione Select restituisce l’albero associato al tag indicato, oppure l
 Si estenda l’interprete OCaML del linguaggio funzionale assumendo la regola di scoping statico.
 1. Si verifichi la correttezza dell’interprete progettando ed eseguendo una quantità di casi di test sufficiente a testare tutti gli operatori aggiuntivi.
 La sintassi astratta suggerita può essere modificata e, se ritenuto necessario, estesa.
-Modalità di consegna
+## Modalità di consegna
 * Il progetto deve essere svolto e discusso col docente individualmente. Il confronto con colleghi mirante a valutare soluzioni alternative durante la fase di progetto è incoraggiato.
 * Il progetto deve essere costituito da
 * i file sorgente contenenti il codice sviluppato e le corrispondenti batterie di test, ove tutto il
