@@ -2,7 +2,7 @@
 ## Secondo Progetto Sessione Estiva-Autunnale
 Il progetto ha l’obiettivo di applicare a casi specifici i concetti e le tecniche di programmazione esaminate durante la seconda parte del corso, e consiste nella progettazione e realizzazione di alcuni moduli software.
 ## Descrizione: Progettazione e sviluppo di un interprete in OCaml
-Si consideri un’estensione del linguaggio didattico funzionale presentato a lezione ([a relative link](evalFunEnvFull.ml)
+Si consideri un’estensione del ([linguaggio didattico funzionale presentato a lezione](evalFunEnvFull.ml)
 ) che permetta di manipolare alberi binari di espressioni. L’estensione minimale dei tipi è riportata di seguito
 Ogni nodo di un albero, oltre ai figli, ha associato un identificatore (tag) e un’espressione. Quando un albero è definito, le espressioni dei nodi devono essere valutate, e solo quelle. I tag servono a caratterizzare (in maniera univoca) i nodi dell ’albero.
 Ad esempio, l’espressione
