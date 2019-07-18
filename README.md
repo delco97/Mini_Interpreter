@@ -4,6 +4,13 @@ Il progetto ha l’obiettivo di applicare a casi specifici i concetti e le tecni
 ## Descrizione: Progettazione e sviluppo di un interprete in OCaml
 Si consideri un’estensione del ([linguaggio didattico funzionale presentato a lezione](evalFunEnvFull.ml)
 ) che permetta di manipolare alberi binari di espressioni. L’estensione minimale dei tipi è riportata di seguito
+```ocaml
+type exp = ... | ETree of tree (* gli alberi sono anche espressioni *)
+|ApplyOver of (ide list) exp * exp (* applicazione di funzione ai nodi *)
+|Select of ide * exp (* selezione di un nodo *)
+and tree = Empty (* albero vuoto *)
+| Node of ide * exp * tree * tree (* albero binario *)
+```
 Ogni nodo di un albero, oltre ai figli, ha associato un identificatore (tag) e un’espressione. Quando un albero è definito, le espressioni dei nodi devono essere valutate, e solo quelle. I tag servono a caratterizzare (in maniera univoca) i nodi dell ’albero.
 Ad esempio, l’espressione
 ```ocaml
