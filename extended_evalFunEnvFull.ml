@@ -1,8 +1,10 @@
-type ide = string;;
-type exp = Eint of int | Ebool of bool | Den of ide | Prod of exp * exp | Sum of exp * exp | Diff of exp * exp |
-	Eq of exp * exp | Minus of exp | IsZero of exp | Or of exp * exp | And of exp * exp | Not of exp |
-	Ifthenelse of exp * exp * exp | Let of ide * exp * exp | Fun of ide * exp | FunCall of exp * exp |
-	Letrec of ide * exp * exp;;
+type ide = string;; 
+type exp = Eint of int | Ebool of bool | Den of ide | Prod of exp * exp | Sum of exp * exp | Diff of exp * exp | Eq of exp * exp |
+	Minus of exp | IsZero of exp | Or of exp * exp | And of exp * exp | Not of exp | Ifthenelse of exp * exp * exp |
+	Let of ide * exp * exp | Fun of ide * exp | FunCall of exp * exp | Letrec of ide * exp * exp | 
+	ETree of tree | 
+	ApplyOver of (ide list) exp * exp |
+	Select of ide * exp;;
 
 (*ambiente polimorfo*)
 type 't env = ide -> 't;;
