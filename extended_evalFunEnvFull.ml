@@ -35,6 +35,10 @@ let typecheck (s : string) (v : evT) : bool = match s with
 	_ -> failwith("not a valid type");;
 
 (*funzioni primitive*)
+let rec contains (l:'a list) (x :'a) = match l with
+	[] -> false |
+	y::ys -> if y = x then true else contains ys x;;
+
 let prod x y = if (typecheck "int" x) && (typecheck "int" y)
 	then (match (x,y) with
 		(Int(n),Int(u)) -> Int(n*u) |
@@ -139,7 +143,14 @@ let rec eval (e : exp) (r : evT env) : evT = match e with
 														 	Tree(Empty) -> eval (Select(i,ETree(t2))) r |
 															_ -> s1))  |
 						_ -> failwith("non tree def")) |
-	ApplyOver(tags,f,eArg) ->  failwith("NON ANCORA IMPLEMENTATO");;
+	ApplyOver(tags,f,et) -> (match et with
+								ETree(Empty) -> Tree(Empty) |
+								ETree(Node(idn,en,t1,t2)) -> (if contains tags idn then 
+																Tree(Node(idn, f (eval en r), eval (ApplyOver(tags, f, t1)) r, eval (ApplyOver(tags, f, t2)) r))
+															  else 	
+															  	Tree(Node(idn, eval en r, eval (ApplyOver(tags, f, t1)) r, eval (ApplyOver(tags, f, t2)) r))
+															)  |
+								_ -> failwith("non tree def"));;
 
 
 (* =============================  TESTS  ================= *)
