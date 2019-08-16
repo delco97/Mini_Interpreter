@@ -28,48 +28,57 @@ let typecheck (s : string) (v : evT) : bool = match s with
 (*funzioni primitive*)
 let prod x y = if (typecheck "int" x) && (typecheck "int" y)
 	then (match (x,y) with
-		(Int(n),Int(u)) -> Int(n*u))
+		(Int(n),Int(u)) -> Int(n*u) |
+		_ -> failwith("Type error - typecheck failed"))
 	else failwith("Type error");;
 
 let sum x y = if (typecheck "int" x) && (typecheck "int" y)
 	then (match (x,y) with
-		(Int(n),Int(u)) -> Int(n+u))
+		(Int(n),Int(u)) -> Int(n+u) |
+		_ -> failwith("Type error - typecheck failed"))
 	else failwith("Type error");;
 
 let diff x y = if (typecheck "int" x) && (typecheck "int" y)
 	then (match (x,y) with
-		(Int(n),Int(u)) -> Int(n-u))
+		(Int(n),Int(u)) -> Int(n-u) |
+		_ -> failwith("Type error - typecheck failed"))
 	else failwith("Type error");;
 
 let eq x y = if (typecheck "int" x) && (typecheck "int" y)
 	then (match (x,y) with
-		(Int(n),Int(u)) -> Bool(n=u))
+		(Int(n),Int(u)) -> Bool(n=u) |
+		_ -> failwith("Type error - typecheck failed"))
 	else failwith("Type error");;
 
 let minus x = if (typecheck "int" x) 
 	then (match x with
-	   	Int(n) -> Int(-n))
+	   	Int(n) -> Int(-n) |
+		_ -> failwith("Type error - typecheck failed"))
 	else failwith("Type error");;
 
 let iszero x = if (typecheck "int" x)
 	then (match x with
-		Int(n) -> Bool(n=0))
+		Int(n) -> Bool(n=0) |
+		_ -> failwith("Type error - typecheck failed"))
 	else failwith("Type error");;
 
 let vel x y = if (typecheck "bool" x) && (typecheck "bool" y)
 	then (match (x,y) with
-		(Bool(b),Bool(e)) -> (Bool(b||e)))
+		(Bool(b),Bool(e)) -> (Bool(b||e)) |
+		_ -> failwith("Type error - typecheck failed"))
 	else failwith("Type error");;
 
 let et x y = if (typecheck "bool" x) && (typecheck "bool" y)
 	then (match (x,y) with
-		(Bool(b),Bool(e)) -> Bool(b&&e))
+		(Bool(b),Bool(e)) -> Bool(b&&e) |
+		_ -> failwith("Type error - typecheck failed"))
 	else failwith("Type error");;
 
 let non x = if (typecheck "bool" x)
 	then (match x with
 		Bool(true) -> Bool(false) |
-		Bool(false) -> Bool(true))
+		Bool(false) -> Bool(true) |
+		_ -> failwith("Type error - typecheck failed"))
 	else failwith("Type error");;
 
 (*interprete*)
