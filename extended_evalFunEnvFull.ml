@@ -137,19 +137,22 @@ let rec eval (e : exp) (r : evT env) : evT = match e with
 				_ -> failwith("non functional def")) |
 	Select(i,et) ->  (match et with
 						ETree(Empty) -> Tree(Empty) |
-						ETree(Node(idn,en,t1,t2)) -> (if i = idn then eval et r
+						ETree(Node(idn,en,t1,t2)) -> if i = idn then eval et r
 													 else let s1 = eval (Select(i,ETree(t1))) r in
-														 (match s1 with
-														 	Tree(Empty) -> eval (Select(i,ETree(t2))) r |
-															_ -> s1))  |
+														 	(match s1 with
+														 		Tree(Empty) -> eval (Select(i,ETree(t2))) r |
+																_ -> s1)  |
 						_ -> failwith("non tree def")) |
 	ApplyOver(tags,f,et) -> (match et with
 								ETree(Empty) -> Tree(Empty) |
-								ETree(Node(idn,en,t1,t2)) -> (if contains tags idn then 
-																Tree(Node(idn, f (eval en r), eval (ApplyOver(tags, f, t1)) r, eval (ApplyOver(tags, f, t2)) r))
+								ETree(Node(idn,en,t1,t2)) -> if contains tags idn then 
+																Tree(Node(idn, eval (FunCall(f,en)) r,
+																               eval (ApplyOver(tags, f, ETree(t1))) r,
+																			   eval (ApplyOver(tags, f, ETree(t2))) r))
 															  else 	
-															  	Tree(Node(idn, eval en r, eval (ApplyOver(tags, f, t1)) r, eval (ApplyOver(tags, f, t2)) r))
-															)  |
+															  	Tree(Node(idn, eval en r,
+																               eval (ApplyOver(tags, f, ETree(t1))) r,
+																			   eval (ApplyOver(tags, f, ETree(t2))) r)) |
 								_ -> failwith("non tree def"));;
 
 
@@ -223,5 +226,48 @@ assert (match eval (Select("b", t1)) env0 with
 print_endline "1.3";;
 assert (match eval (Select("c", t1)) env0 with 
 		Tree(Empty) -> true |
+		_ -> false
+		);;
+
+let e = (Minus(Eint 5));;
+
+(* 2 Test Select(i,et) *)
+let t2 = ETree(
+			Node("a",Sum(Eint 2, Eint 2), 
+				Node("b",Prod(Eint 1,Eint 3),  
+					Node("d",Eint 6,
+						Empty,
+						Empty
+						),
+					Node("d",Eint(5),
+						Empty,
+						Empty
+						)
+					),
+				Node("b",Minus(Eint 2),
+					Empty,
+					Node("a", 
+						Minus(Eint 5),
+						Empty,
+						Empty
+						)
+					)
+				)
+			);;
+let somma10 = Fun("x", Sum(Den "x", Eint 10));;
+(* 2,1 applicazione di funzione somma10 su nodi con tag "a" *)
+print_endline "1.3";;
+assert (match eval (ApplyOver(["a"], somma10 ,t2)) env0 with 
+		Tree
+		(Node ("a", Int 14,
+			Tree
+			(Node ("b", Int 3,
+				Tree
+				(Node ("d", Int 6, Tree Empty,
+				Tree Empty)),
+				Tree (Node ("d", Int 5, Tree Empty, Tree Empty)))),
+			Tree
+			(Node ("b", Int (-2), Tree Empty,
+				Tree (Node ("a", Int 5, Tree Empty, Tree Empty)))))) |
 		_ -> false
 		);;
