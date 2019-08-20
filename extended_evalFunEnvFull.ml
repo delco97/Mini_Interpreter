@@ -100,8 +100,9 @@ let rec eval (e : exp) (r : evT env) : evT = match e with
 	Ebool b -> Bool b |
 	ETree(Empty) -> Tree(Empty) |
 	ETree(Node(i,en,t1,t2)) ->	let ris1 = eval (ETree(t1)) r in
-							   	let ris2 = eval (ETree(t2)) r in	
-								Tree(Node(i,eval en r,ris1, ris2)) |
+							   	let ris2 = eval (ETree(t2)) r in
+								let ris_en = eval en r in
+								Tree(Node(i,ris_en,ris1, ris2)) |
 	IsZero a -> iszero (eval a r) |
 	Den i -> applyenv r i |
 	Eq(a, b) -> eq (eval a r) (eval b r) |
@@ -137,22 +138,21 @@ let rec eval (e : exp) (r : evT env) : evT = match e with
 				_ -> failwith("non functional def")) |
 	Select(i,et) ->  (match et with
 						ETree(Empty) -> Tree(Empty) |
-						ETree(Node(idn,en,t1,t2)) -> if i = idn then eval et r
+						ETree(Node(idn,en,t1,t2)) -> if i = idn then eval et r 
 													 else let s1 = eval (Select(i,ETree(t1))) r in
 														 	(match s1 with
 														 		Tree(Empty) -> eval (Select(i,ETree(t2))) r |
 																_ -> s1)  |
 						_ -> failwith("non tree def")) |
-	ApplyOver(tags,f,et) -> (match et with
-								ETree(Empty) -> Tree(Empty) |
-								ETree(Node(idn,en,t1,t2)) -> if contains tags idn then 
-																Tree(Node(idn, eval (FunCall(f,en)) r,
-																               eval (ApplyOver(tags, f, ETree(t1))) r,
-																			   eval (ApplyOver(tags, f, ETree(t2))) r))
-															  else 	
-															  	Tree(Node(idn, eval en r,
-																               eval (ApplyOver(tags, f, ETree(t1))) r,
-																			   eval (ApplyOver(tags, f, ETree(t2))) r)) |
+	ApplyOver(tags,f,et) -> (match (tags,et) with
+								([],ETree(_)) -> eval et r | (* se elenco  di tags è vuoto la funzione non deve esswre applicata a nessun nodo*)
+								(x::xs,ETree(Empty)) -> Tree(Empty) | 
+								(x::xs,ETree(Node(idn,en,t1,t2))) -> let ris1 = eval (ApplyOver(tags, f, ETree(t1))) r in
+							   								 		 let ris2 = eval (ApplyOver(tags, f, ETree(t2))) r in
+															 		 if contains tags idn then
+																		Tree(Node(idn, eval (FunCall(f,en)) r, ris1, ris2)) (* sul nodo deve essere applicata f *)
+															  		 else 	
+															  			Tree(Node(idn, eval en r, ris1, ris2)) |
 								_ -> failwith("non tree def"));;
 
 
@@ -170,9 +170,9 @@ let e2 = FunCall(Let("x", Eint 2, Fun("y", Sum(Den "y", Den "x"))), Eint 3);;
 eval e2 env0;;
 
 (* =============================  TESTS per alberi di espressioni  ================= *)
-print_endline "***1 Test alberi di espressioni***";;
+print_endline "*** TEST Alberi di espressioni ***";;
+print_endline " Section 1 - Select(i,et)";;
 (* 1 Test Select(i,et) *)
-
 let t1 = ETree(
 			Node("a",Sum(Eint 2, Eint 2), 
 				Node("b",Prod(Eint 1,Eint 3),  
@@ -195,43 +195,42 @@ let t1 = ETree(
 					)
 				)
 			);;
-(* 1.1 selezione nodo "a" presente nella radice e in un altro nodo dell'albero. *)
-print_endline "1.1";;
-assert (match eval (Select("a", t1)) env0 with 
+(* 1.1 selezione nodo "a" presente nella radice e in un altro nodo dell'albero. 
+Deve essere selezionato il nodo nella radice in quanto la visita dell'albero procede con una visita anticipata*)
+print_string "  1.1: ";;
+match eval (Select("a", t1)) env0 with 
 		Tree
-		(Node ("a", Int 3,
+			(Node ("a", Int 4,
 			Tree
-			(Node ("b", Int 3,
+				(Node ("b", Int 3,
 				Tree
-				(Node ("d", FunVal ("y", Sum (Den "y", Eint 1), ev0), Tree Empty,
-				Tree Empty)),
+				(Node ("d", FunVal ("y", Sum (Den "y", Eint 1), env0), Tree Empty,
+					Tree Empty)),
 				Tree (Node ("d", Int 5, Tree Empty, Tree Empty)))),
 			Tree
-			(Node ("b", Int (-2), Tree Empty,
-				Tree (Node ("a", Int 6, Tree Empty, Tree Empty)))))) -> true |
-		_ -> false
-		);;
-(* 1.2 selezione nodo "b" presente anche nell'altro nodo allo stesso livello. *)
-print_endline "1.2";;
-assert (match eval (Select("b", t1)) env0 with 
+				(Node ("b", Int (-2), Tree Empty,
+				Tree (Node ("a", Int 6, Tree Empty, Tree Empty)))))) -> print_endline "Passed" |
+		_ -> print_endline "Failed";;
+(* 1.2 selezione nodo "b" presente anche nell'altro nodo allo stesso livello.
+Deve essere selezionato il sottoalbero sinistro in quanto la visita dell'albero procede con una visita anticipata*)
+print_string "  1.2: ";;
+match eval (Select("b", t1)) env0 with 
 		Tree
 		(Node ("b", Int 3,
 		Tree
 			(Node ("d", FunVal ("y", Sum (Den "y", Eint 1), ev0), Tree Empty,
 			Tree Empty)),
-		Tree (Node ("d", Int 5, Tree Empty, Tree Empty)))) -> true |
-		_ -> false
-		);;
-(* 1.3 selezione nodo non presente *)
-print_endline "1.3";;
-assert (match eval (Select("c", t1)) env0 with 
-		Tree(Empty) -> true |
-		_ -> false
-		);;
+		Tree (Node ("d", Int 5, Tree Empty, Tree Empty)))) -> print_endline "Passed" |
+		_ -> print_endline "Failed";;
+(* 1.3 selezione nodo "c" non presente nell'albero.
+Deve restituire un albero vuoto *)
+print_string "  1.3: ";;
+match eval (Select("c", t1)) env0 with 
+		Tree(Empty) -> print_endline "Passed" |
+		_ -> print_endline "Failed";;
 
-let e = (Minus(Eint 5));;
-
-(* 2 Test Select(i,et) *)
+print_endline " Section 2 - ApplyOver(tags,f,et)";;
+(* 2 Test ApplyOver(tags,f,et) *)
 let t2 = ETree(
 			Node("a",Sum(Eint 2, Eint 2), 
 				Node("b",Prod(Eint 1,Eint 3),  
@@ -255,19 +254,45 @@ let t2 = ETree(
 				)
 			);;
 let somma10 = Fun("x", Sum(Den "x", Eint 10));;
-(* 2,1 applicazione di funzione somma10 su nodi con tag "a" *)
-print_endline "1.3";;
-assert (match eval (ApplyOver(["a"], somma10 ,t2)) env0 with 
+(* 2.1 applicazione di funzione somma10 su nodi con tag "a"
+I nodi con tag uguale ad "a" devono essere applicati alla funzione somma10 ed ognuono di 
+essi dovrà contenere il risultato della valutazione della funzione *)
+print_string "  2.1: ";;
+match eval (ApplyOver(["a"], somma10 ,t2)) env0 with 
 		Tree
 		(Node ("a", Int 14,
-			Tree
-			(Node ("b", Int 3,
-				Tree
-				(Node ("d", Int 6, Tree Empty,
-				Tree Empty)),
-				Tree (Node ("d", Int 5, Tree Empty, Tree Empty)))),
-			Tree
+		Tree
+			(Node ("b", Int 3, Tree (Node ("d", Int 6, Tree Empty, Tree Empty)),
+			Tree (Node ("d", Int 5, Tree Empty, Tree Empty)))),
+		Tree
 			(Node ("b", Int (-2), Tree Empty,
-				Tree (Node ("a", Int 5, Tree Empty, Tree Empty)))))) |
-		_ -> false
-		);;
+			Tree (Node ("a", Int 5, Tree Empty, Tree Empty)))))) -> print_endline "Passed" |
+		_ -> print_endline "Failed";;
+
+(* 2.2 applicazione di funzione somma10 su nodi con tag "z" tag non presente nell'albero)
+La funzione somma10 non deve essere applicata a nessun nodo dell'albero *)
+print_string "  2.2: ";;
+match eval (ApplyOver(["z"], somma10 ,t2)) env0 with 
+		Tree
+		(Node ("a", Int 4,
+		Tree
+			(Node ("b", Int 3, Tree (Node ("d", Int 6, Tree Empty, Tree Empty)),
+			Tree (Node ("d", Int 5, Tree Empty, Tree Empty)))),
+		Tree
+			(Node ("b", Int (-2), Tree Empty,
+			Tree (Node ("a", Int (-5), Tree Empty, Tree Empty)))))) -> print_endline "Passed" |
+		_ -> print_endline "Failed";;
+
+(*  2.3 applicazione di funzione somma10 su nodi con tag "a" oppure "b".
+La funzione somma10 deve essere applicata ai soli nodi con tag "a" oppure "b" *)
+print_string "  2.3: ";;
+match eval (ApplyOver(["a";"b"], somma10 ,t2)) env0 with 
+		Tree
+		(Node ("a", Int 14,
+		Tree
+			(Node ("b", Int 13, Tree (Node ("d", Int 6, Tree Empty, Tree Empty)),
+			Tree (Node ("d", Int 5, Tree Empty, Tree Empty)))),
+		Tree
+			(Node ("b", Int (8), Tree Empty,
+			Tree (Node ("a", Int (5), Tree Empty, Tree Empty)))))) -> print_endline "Passed" |
+		_ -> print_endline "Failed";;
