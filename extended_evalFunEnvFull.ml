@@ -35,10 +35,6 @@ let typecheck (s : string) (v : evT) : bool = match s with
 	_ -> failwith("not a valid type");;
 
 (*funzioni primitive*)
-let rec contains (l:'a list) (x :'a) = match l with
-	[] -> false |
-	y::ys -> if y = x then true else contains ys x;;
-
 let prod x y = if (typecheck "int" x) && (typecheck "int" y)
 	then (match (x,y) with
 		(Int(n),Int(u)) -> Int(n*u) |
@@ -149,7 +145,7 @@ let rec eval (e : exp) (r : evT env) : evT = match e with
 								(x::xs,ETree(Empty)) -> Tree(Empty) | 
 								(x::xs,ETree(Node(idn,en,t1,t2))) -> let ris1 = eval (ApplyOver(tags, f, ETree(t1))) r in
 							   								 		 let ris2 = eval (ApplyOver(tags, f, ETree(t2))) r in
-															 		 if contains tags idn then
+															 		 if List.exists (function el -> el = idn) tags then
 																		Tree(Node(idn, eval (FunCall(f,en)) r, ris1, ris2)) (* sul nodo deve essere applicata f *)
 															  		 else 	
 															  			Tree(Node(idn, eval en r, ris1, ris2)) |
